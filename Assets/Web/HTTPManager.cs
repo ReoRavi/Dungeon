@@ -4,52 +4,45 @@ using System.Net;
 using System.IO;
 using System.Net.Json;
 
-public class UserDataLoad : MonoBehaviour {
+public enum RESTType { GET, PUT, POST, DELETE };
 
-    // Use this for initialization
-    void Start()
+public class HTTPManager : MonoBehaviour
+{
+    // PHP URL 주소
+    public string url;
+    // DB 이름
+    public string dbName;
+    // PHP Key
+    public string key;
+    // DB 컬럼
+    public string[] columns;
+    // DB 데이터
+    public string[] datas;
+    // REST 종류
+    public RESTType restType;
+
+    public string HTTP_REQUEST()
     {
-        // 처음 접속이라면
-        if (!PlayerPrefs.HasKey("firstAccess"))
+        switch (restType)
         {
-            PlayerPrefs.SetInt("firstAccess", 1);
+            case RESTType.GET:
+                return HTTP_GET(url + "/" + dbName + "/" + key);
 
-            string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
-            string[] datas = { "0", "0", "\\\"Ravi\\\"", "0", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "0" };
+            case RESTType.PUT:
+                return HTTP_PUT(url + "/" + dbName + "/" + PlayerPrefs.GetString("UserCode"), columns, datas);
 
-            PlayerPrefs.SetString("UserCode", HTTP_POST("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/FirstAccess", columns, datas));
+            case RESTType.POST:
+                return HTTP_POST(url + "/" + dbName + "/" + key, columns, datas);
 
-            Debug.Log("Code : " + PlayerPrefs.GetString("UserCode"));
+            case RESTType.DELETE:
+                return HTTP_DELETE(url + "/" + dbName + "/" + key);
+
+            default:
+                return "Error!";
         }
     }
 
-    public void FirstAccess()
-    {
-        string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
-        string[] datas = { "0", "0", "\\\"Ravi\\\"", "0", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "0" };
-
-        HTTP_POST("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData", columns, datas);
-    }
-
-    public void FirstAccessGet()
-    {
-        HTTP_GET("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/1");
-    }
-
-    public void FirstAccessPut()
-    {
-        string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
-        string[] datas = { "1", "1237", "\\\"Ravi\\\"", "1", "\\\"1000-00-00 00:00:00\\\"", "\\\"1000-00-00 00:00:00\\\"", "\\\"1000-00-00 00:00:00\\\"", "1" };
-
-        HTTP_PUT("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/1", columns, datas);
-    }
-
-    public void FirstAccessDelete()
-    {
-        HTTP_DELETE("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/0");
-    }
-
-    private void HTTP_GET(string url)
+    private string HTTP_GET(string url)
     {
         HttpWebRequest webRequest = WebRequest.Create(url) as HttpWebRequest;
 
@@ -64,14 +57,12 @@ public class UserDataLoad : MonoBehaviour {
             result = reader.ReadToEnd();
         }
 
-        JsonTextParser parser = new JsonTextParser();
-        JsonObject jsonObject = parser.Parse(result);
-        JsonObjectCollection col = (JsonObjectCollection)jsonObject;
+        //Debug.Log(col["UserCode"].GetValue());
 
-        Debug.Log(col["UserCode"].GetValue());
+        return result;
     }
 
-    private void HTTP_PUT(string url, string[] columns, string[] datas)
+    private string HTTP_PUT(string url, string[] columns, string[] datas)
     {
         HttpWebRequest webRequest = WebRequest.Create(url) as HttpWebRequest;
 
@@ -92,6 +83,8 @@ public class UserDataLoad : MonoBehaviour {
         }
 
         Debug.Log(result);
+
+        return result;
     }
 
     private string HTTP_POST(string url, string[] columns, string[] datas)
@@ -119,7 +112,7 @@ public class UserDataLoad : MonoBehaviour {
         return result;
     }
 
-    private void HTTP_DELETE(string url)
+    private string HTTP_DELETE(string url)
     {
         HttpWebRequest webRequest = WebRequest.Create(url) as HttpWebRequest;
 
@@ -135,6 +128,8 @@ public class UserDataLoad : MonoBehaviour {
         }
 
         Debug.Log(result);
+
+        return result;
     }
 
     private string CreateJsonFile(string[] column, string[] data)
@@ -169,5 +164,52 @@ public class UserDataLoad : MonoBehaviour {
         jsonString += "}";
 
         return jsonString;
+    }
+
+    public string[] GetUserDataFromJson(string jsonFile, string columnName)
+    {
+        string[] splitedJson = jsonFile.Split('}');
+        string[] data = new string[splitedJson.Length - 1];
+
+        JsonTextParser parser = new JsonTextParser();
+
+        for (int index = 0; index < splitedJson.Length - 1; index++)
+        {
+            string jsonData = splitedJson[index] + "}";
+            JsonObject jsonObject = parser.Parse(jsonData);
+
+            JsonObjectCollection col = (JsonObjectCollection)jsonObject;
+
+            data[index] = col[columnName].GetValue().ToString();
+        }
+
+        return data;
+    }
+
+
+    public void FirstAccess()
+    {
+        string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
+        string[] datas = { "0", "0", "\\\"Ravi\\\"", "0", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "0" };
+
+        HTTP_POST("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData", columns, datas);
+    }
+
+    public void FirstAccessGet()
+    {
+        HTTP_GET("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/1");
+    }
+
+    public void FirstAccessPut()
+    {
+        string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
+        string[] datas = { "1", "1237", "\\\"Ravi\\\"", "1", "\\\"1000-00-00 00:00:00\\\"", "\\\"1000-00-00 00:00:00\\\"", "\\\"1000-00-00 00:00:00\\\"", "1" };
+
+        HTTP_PUT("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/1", columns, datas);
+    }
+
+    public void FirstAccessDelete()
+    {
+        HTTP_DELETE("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/0");
     }
 }

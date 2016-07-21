@@ -1,5 +1,6 @@
-﻿using UnityEngine;
+﻿ using UnityEngine;
 using System.Collections;
+using System;
 
 public class GameManager : MonoBehaviour {
 
@@ -32,9 +33,16 @@ public class GameManager : MonoBehaviour {
 
     // 점수 UI
     ScoreRenewal scoreUI;
+    // 최고기록 오브젝트
+    public GameObject highScoreText;
 
-	// Use this for initialization
-	void Start () {
+    // 최고 기록을 받아올 객체
+    public HTTPManager getHighScore;
+    // 최고 기록을 갱신할 객체
+    public HTTPManager putHighScore;
+
+    // Use this for initialization
+    void Start () {
         backGroundScrollSpeed = 1F;
         respawn = GetComponent<EnemyRespawn>();
         respawnTime = 0;
@@ -63,6 +71,10 @@ public class GameManager : MonoBehaviour {
 
     public void GameEnd(GameObject player)
     {
+        getHighScore.key = PlayerPrefs.GetString("UserCode").ToString();
+
+        string[] highScore = getHighScore.GetUserDataFromJson(getHighScore.HTTP_REQUEST(), "HighScore");
+
         bIsPlay = false;
         player.SetActive(false);
         playUI.SetActive(false);
@@ -70,6 +82,19 @@ public class GameManager : MonoBehaviour {
 
         ScoreRenewal endScore = endUI.GetComponent<ScoreRenewal>();
         endScore.Renewal(respawnCount - 1);
+
+        // 최고기록인지
+        if (Int16.Parse(highScore[0]) < respawnCount - 1)
+        {
+            putHighScore.datas[0] = (respawnCount -1).ToString();
+
+            if (putHighScore.HTTP_REQUEST() == "error")
+            {
+                Debug.Log("PUT HighScore Error");
+            }
+
+            highScoreText.SetActive(true);
+        }
     }
 
     void GameLoop()
@@ -114,27 +139,27 @@ public class GameManager : MonoBehaviour {
             // 리스폰 레벨 0
             if (respawnLevel == 0)
             {
-                respawn.Respawn(Random.Range(0, 4), Random.Range(-1, 2), moveSpeed);
+                respawn.Respawn(UnityEngine.Random.Range(0, 4), UnityEngine.Random.Range(-1, 2), moveSpeed);
             }
             // 리스폰 레벨 1
             else
             {
-                int firstRespawnCount = Random.Range(-1, 2);
-                int secondRespawnCount = Random.Range(-1, 2);
+                int firstRespawnCount = UnityEngine.Random.Range(-1, 2);
+                int secondRespawnCount = UnityEngine.Random.Range(-1, 2);
 
                 if (firstRespawnCount == secondRespawnCount)
                 {
                     while (firstRespawnCount == secondRespawnCount)
                     {
-                        secondRespawnCount = Random.Range(-1, 2);
+                        secondRespawnCount = UnityEngine.Random.Range(-1, 2);
                     }
                 }
 
                 Debug.Log(firstRespawnCount);
                 Debug.Log(secondRespawnCount);
 
-                respawn.Respawn(Random.Range(0, 4), firstRespawnCount, moveSpeed);
-                respawn.Respawn(Random.Range(0, 4), secondRespawnCount, moveSpeed);
+                respawn.Respawn(UnityEngine.Random.Range(0, 4), firstRespawnCount, moveSpeed);
+                respawn.Respawn(UnityEngine.Random.Range(0, 4), secondRespawnCount, moveSpeed);
             }
         }
     }
