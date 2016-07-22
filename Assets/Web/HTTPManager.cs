@@ -3,6 +3,7 @@ using System.Collections;
 using System.Net;
 using System.IO;
 using System.Net.Json;
+using UnityEngine.UI;
 
 public enum RESTType { GET, PUT, POST, DELETE };
 
@@ -57,9 +58,9 @@ public class HTTPManager : MonoBehaviour
             result = reader.ReadToEnd();
         }
 
-        //Debug.Log(col["UserCode"].GetValue());
+        Debug.Log(result);
 
-        return result;
+        return ReplaceJsonData(result);
     }
 
     private string HTTP_PUT(string url, string[] columns, string[] datas)
@@ -84,7 +85,7 @@ public class HTTPManager : MonoBehaviour
 
         Debug.Log(result);
 
-        return result;
+        return ReplaceJsonData(result);
     }
 
     private string HTTP_POST(string url, string[] columns, string[] datas)
@@ -109,7 +110,7 @@ public class HTTPManager : MonoBehaviour
 
         Debug.Log(result);
 
-        return result;
+        return ReplaceJsonData(result);
     }
 
     private string HTTP_DELETE(string url)
@@ -129,7 +130,7 @@ public class HTTPManager : MonoBehaviour
 
         Debug.Log(result);
 
-        return result;
+        return ReplaceJsonData(result);
     }
 
     private string CreateJsonFile(string[] column, string[] data)
@@ -166,15 +167,29 @@ public class HTTPManager : MonoBehaviour
         return jsonString;
     }
 
-    public string[] GetUserDataFromJson(string jsonFile, string columnName)
+    public string[] GetUserDataFromJson(string jsonFile, string columnName, Text text = null)
     {
+        text.text = "String";
+
+        if (jsonFile.Length == 0)
+        {
+             return new string[2] ;
+        }
+
         string[] splitedJson = jsonFile.Split('}');
+        text.text = "Allocs";
         string[] data = new string[splitedJson.Length - 1];
+
+        text.text = "AllocEnd";
+
+        text.text = splitedJson.Length.ToString();
 
         JsonTextParser parser = new JsonTextParser();
 
         for (int index = 0; index < splitedJson.Length - 1; index++)
         {
+            text.text = index.ToString();           
+
             string jsonData = splitedJson[index] + "}";
             JsonObject jsonObject = parser.Parse(jsonData);
 
@@ -186,30 +201,11 @@ public class HTTPManager : MonoBehaviour
         return data;
     }
 
-
-    public void FirstAccess()
+    // php에서 include를 사용하니 AP 라는 문자열이 추가로 리턴됨, 따로 처리해준다
+    private string ReplaceJsonData(string jsonData)
     {
-        string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
-        string[] datas = { "0", "0", "\\\"Ravi\\\"", "0", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "\\\"0000-00-00 00:00:00\\\"", "0" };
-
-        HTTP_POST("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData", columns, datas);
-    }
-
-    public void FirstAccessGet()
-    {
-        HTTP_GET("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/1");
-    }
-
-    public void FirstAccessPut()
-    {
-        string[] columns = { "UserCode", "FriendCode", "NickName", "HighScore", "FirstAccessTime", "AccessTime", "LastAccessTime", "FriendCount" };
-        string[] datas = { "1", "1237", "\\\"Ravi\\\"", "1", "\\\"1000-00-00 00:00:00\\\"", "\\\"1000-00-00 00:00:00\\\"", "\\\"1000-00-00 00:00:00\\\"", "1" };
-
-        HTTP_PUT("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/1", columns, datas);
-    }
-
-    public void FirstAccessDelete()
-    {
-        HTTP_DELETE("http://ravi1237.com/Dungeon/UnityTest.php/Dungeon_UserData/0");
+        string data = jsonData.Substring(jsonData.IndexOf("AP") + 2);
+        Debug.Log(data);
+        return data;
     }
 }

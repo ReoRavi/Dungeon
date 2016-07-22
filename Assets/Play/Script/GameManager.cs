@@ -1,8 +1,9 @@
-﻿ using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System;
 
-public class GameManager : MonoBehaviour {
+public class GameManager : MonoBehaviour
+{
 
     // 배경 객체
     public BackGroundScroll backGround;
@@ -38,27 +39,38 @@ public class GameManager : MonoBehaviour {
 
     // 최고 기록을 받아올 객체
     public HTTPManager getHighScore;
+    // 유저 정보를 받아올 객체
+    public HTTPManager getUserData;
     // 최고 기록을 갱신할 객체
     public HTTPManager putHighScore;
 
+    // 게임 랭킹을 받아올 객체
+    public HTTPManager getRank;
+    // 게임 랭킹을 갱신할 객체
+    public HTTPManager putRank;
+    // 게임 랭킹을 생성할 객체
+    public HTTPManager postRank;
+
     // Use this for initialization
-    void Start () {
-        backGroundScrollSpeed = 1F;
+    void Start()
+    {
+        backGroundScrollSpeed = 2F;
         respawn = GetComponent<EnemyRespawn>();
         respawnTime = 0;
-        levelUpCount = 3;
-        respawnInterval = 4;
+        levelUpCount = 10;
+        respawnInterval = 2;
         respawnLevel = 0;
         respawnCount = 1;
-        moveSpeed = 0.05F;
+        moveSpeed = 0.1F;
 
         bIsPlay = true;
 
         scoreUI = GetComponent<ScoreRenewal>();
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update()
+    {
 
         if (bIsPlay)
         {
@@ -86,14 +98,67 @@ public class GameManager : MonoBehaviour {
         // 최고기록인지
         if (Int16.Parse(highScore[0]) < respawnCount - 1)
         {
-            putHighScore.datas[0] = (respawnCount -1).ToString();
+            highScoreText.SetActive(true);
+
+            putHighScore.datas[0] = (respawnCount - 1).ToString();
 
             if (putHighScore.HTTP_REQUEST() == "error")
             {
                 Debug.Log("PUT HighScore Error");
             }
 
-            highScoreText.SetActive(true);
+            // 랭킹 갱신
+            string rankResult = getRank.HTTP_REQUEST();
+
+            if (rankResult != "error")
+            {
+                string[] userCodes = getRank.GetUserDataFromJson(rankResult, "UserCode");
+
+                // DB가 비어있지 않다면
+                if (userCodes.Length > 0)
+                {
+                    foreach (string code in userCodes)
+                    {
+                        // DB에 사용자 데이터가 존재함
+                        if (code == PlayerPrefs.GetString("UserCode"))
+                        {
+                            putRank.datas[0] = (respawnCount - 1).ToString();
+
+                            putRank.HTTP_REQUEST();
+
+                            return;
+                        }
+                    }
+
+                    // DB에 사용자 데이터가 존재하지 않음
+                    getUserData.key = PlayerPrefs.GetString("UserCode");
+
+                    string userDataResult = getUserData.HTTP_REQUEST();
+
+                    string[] nickName = getUserData.GetUserDataFromJson(userDataResult, "NickName");
+
+                    postRank.datas[0] = PlayerPrefs.GetString("UserCode");
+                    postRank.datas[1] = "\\\"" + nickName[0] + "\\\"";
+                    postRank.datas[2] = (respawnCount - 1).ToString();
+
+                    postRank.HTTP_REQUEST();
+                }
+                // DB가 비어있다면
+                else
+                {
+                    getUserData.key = PlayerPrefs.GetString("UserCode");
+
+                    string userDataResult = getUserData.HTTP_REQUEST();
+
+                    string[] nickName = getUserData.GetUserDataFromJson(userDataResult, "NickName");
+
+                    postRank.datas[0] = PlayerPrefs.GetString("UserCode");
+                    postRank.datas[1] = "\\\"" + nickName[0] + "\\\"";
+                    postRank.datas[2] = (respawnCount - 1).ToString();
+
+                    postRank.HTTP_REQUEST();
+                }
+            }
         }
     }
 
@@ -112,24 +177,27 @@ public class GameManager : MonoBehaviour {
             }
 
             // 몬스터가 소환될 때 마다 난이도를 조절한다.
-
-            // 몬스터 이동 속도 증가
-            if ((respawnCount % levelUpCount) == 0 && moveSpeed <= 0.22F)
+            if (respawnCount % levelUpCount == 0)
             {
-                moveSpeed += 0.01F;
+                if (moveSpeed <= 0.2F)
+                {
+                    moveSpeed += 0.05F;
+                }
+
+                if (respawnCount % (levelUpCount * 2) == 0)
+                {
+                    if (respawnInterval > 1F)
+                    {
+                        respawnInterval -= 0.1F;
+                    }
+                }
+
+                if (respawnCount == 40)
+                {
+                    respawnLevel++;
+                }
             }
 
-            // 몬스터 리스폰 간격 조절
-            if ((respawnCount % (levelUpCount * 3)) == 0 && respawnInterval > 0.5F)
-            {
-                respawnInterval -= 0.5F;
-            }
-
-            // 몬스터 리스폰 레벨 조정
-            if ((respawnCount % (levelUpCount * 10)) == 0 && respawnLevel <= 0)
-            {
-                respawnLevel++;
-            }
 
             respawnTime = 0;
             respawnCount++;
