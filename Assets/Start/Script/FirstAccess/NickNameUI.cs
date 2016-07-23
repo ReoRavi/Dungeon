@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System.Net.Json;
 using UnityEngine.UI;
 
 public enum UIState { normal, facebook, success, error, empty };
@@ -25,8 +24,6 @@ public class NickNameUI : MonoBehaviour
     public HTTPManager getUserDataFromFaceBook;
     // 유저 DB를 생성할 통신 객체
     public HTTPManager createUserDBData;
-
-    public Text DebugString;
 
     void Start()
     {
@@ -132,11 +129,7 @@ public class NickNameUI : MonoBehaviour
                 return;
             }
 
-            DebugString.text = result;
-
-            string[] userNames = userNames = userData.GetUserDataFromJson(result, "NickName", DebugString); ;
-
-            DebugString.text = "NO";
+            string[] userNames = userNames = userData.GetUserDataFromJson(result, "NickName"); ;
 
             foreach (string userName in userNames)
             {

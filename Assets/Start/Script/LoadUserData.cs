@@ -12,22 +12,15 @@ public class LoadUserData : MonoBehaviour
     // 첫 접속 시, 유저 닉네임을 설정할 객체
     public NickNameUI nickNameUI;
 
-    public Text text;
-
     // Use this for initialization
     void Start()
     {
-        text.text = "dd";
-
         userData = GetComponent<HTTPManager>();
 
         // 처음 접속이라면
         if (!PlayerPrefs.HasKey("firstAccess"))
         {
             string code = userCode.HTTP_REQUEST();
-
-            text.text = code.ToString();
-
             if (code == "error")
             {
                 Debug.Log("Get Code Error!");

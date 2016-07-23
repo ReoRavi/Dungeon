@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Net;
 using System.IO;
-using System.Net.Json;
 using UnityEngine.UI;
+using System.Json;
 
 public enum RESTType { GET, PUT, POST, DELETE };
 
@@ -167,36 +167,23 @@ public class HTTPManager : MonoBehaviour
         return jsonString;
     }
 
-    public string[] GetUserDataFromJson(string jsonFile, string columnName, Text text = null)
+    public string[] GetUserDataFromJson(string jsonFile, string columnName)
     {
-        text.text = "String";
-
         if (jsonFile.Length == 0)
         {
-             return new string[2] ;
+            return null;
         }
 
         string[] splitedJson = jsonFile.Split('}');
-        text.text = "Allocs";
-        string[] data = new string[splitedJson.Length - 1];
-
-        text.text = "AllocEnd";
-
-        text.text = splitedJson.Length.ToString();
-
-        JsonTextParser parser = new JsonTextParser();
+        string[] data = new string[splitedJson.Length - 1];    
 
         for (int index = 0; index < splitedJson.Length - 1; index++)
         {
-            text.text = index.ToString();           
-
             string jsonData = splitedJson[index] + "}";
-            JsonObject jsonObject = parser.Parse(jsonData);
+            JsonValue jsonObject = JsonValue.Parse(jsonData);
 
-            JsonObjectCollection col = (JsonObjectCollection)jsonObject;
-
-            data[index] = col[columnName].GetValue().ToString();
-        }
+            data[index] = jsonObject[columnName].ToString();
+    }
 
         return data;
     }

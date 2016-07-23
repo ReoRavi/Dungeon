@@ -23,19 +23,14 @@ public class RankingManager : MonoBehaviour {
 
         string rankingResult = getRanking.HTTP_REQUEST();
 
-        if (rankingResult != "error")
+        if (rankingResult != "error" && rankingResult.Length != 0)
         {
             nickNames = getRanking.GetUserDataFromJson(rankingResult, "NickName");
             scores = getRanking.GetUserDataFromJson(rankingResult, "Score");
-        }
 
-        ChangeText();
+            ChangeText();
+        }
     }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 
     public void PageMove(int direction)
     {
@@ -56,6 +51,11 @@ public class RankingManager : MonoBehaviour {
 
     void ChangeText()
     {
+        if (nickNames == null)
+        {
+            return;
+        }
+
         for (int index = 0; index < rankingTexts.Length; index++)
         {
             if (index + (5 * (pageNumber - 1)) >= nickNames.Length)

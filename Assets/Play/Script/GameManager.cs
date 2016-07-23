@@ -95,8 +95,10 @@ public class GameManager : MonoBehaviour
         ScoreRenewal endScore = endUI.GetComponent<ScoreRenewal>();
         endScore.Renewal(respawnCount - 1);
 
+        string[] score = highScore[0].Split('\"');
+
         // 최고기록인지
-        if (Int16.Parse(highScore[0]) < respawnCount - 1)
+        if (Int16.Parse(score[1]) < respawnCount - 1)
         {
             highScoreText.SetActive(true);
 
@@ -115,12 +117,14 @@ public class GameManager : MonoBehaviour
                 string[] userCodes = getRank.GetUserDataFromJson(rankResult, "UserCode");
 
                 // DB가 비어있지 않다면
-                if (userCodes.Length > 0)
+                if (userCodes != null)
                 {
                     foreach (string code in userCodes)
                     {
+                        string[] codeString = code.Split('\"');
+
                         // DB에 사용자 데이터가 존재함
-                        if (code == PlayerPrefs.GetString("UserCode"))
+                        if (codeString[1] == PlayerPrefs.GetString("UserCode"))
                         {
                             putRank.datas[0] = (respawnCount - 1).ToString();
 
@@ -131,14 +135,18 @@ public class GameManager : MonoBehaviour
                     }
 
                     // DB에 사용자 데이터가 존재하지 않음
-                    getUserData.key = PlayerPrefs.GetString("UserCode");
+                    string userCode = PlayerPrefs.GetString("UserCode");
+
+                    getUserData.key = userCode;
 
                     string userDataResult = getUserData.HTTP_REQUEST();
 
                     string[] nickName = getUserData.GetUserDataFromJson(userDataResult, "NickName");
 
+                    string[] nickString = nickName[0].Split('\"');
+
                     postRank.datas[0] = PlayerPrefs.GetString("UserCode");
-                    postRank.datas[1] = "\\\"" + nickName[0] + "\\\"";
+                    postRank.datas[1] = "\\\"" + nickString[1] + "\\\"";
                     postRank.datas[2] = (respawnCount - 1).ToString();
 
                     postRank.HTTP_REQUEST();
@@ -146,14 +154,19 @@ public class GameManager : MonoBehaviour
                 // DB가 비어있다면
                 else
                 {
-                    getUserData.key = PlayerPrefs.GetString("UserCode");
+                    // DB에 사용자 데이터가 존재하지 않음
+                    string userCode = PlayerPrefs.GetString("UserCode");
+
+                    getUserData.key = userCode;
 
                     string userDataResult = getUserData.HTTP_REQUEST();
 
                     string[] nickName = getUserData.GetUserDataFromJson(userDataResult, "NickName");
 
+                    string[] nickString = nickName[0].Split('\"');
+
                     postRank.datas[0] = PlayerPrefs.GetString("UserCode");
-                    postRank.datas[1] = "\\\"" + nickName[0] + "\\\"";
+                    postRank.datas[1] = "\\\"" + nickString[1] + "\\\"";
                     postRank.datas[2] = (respawnCount - 1).ToString();
 
                     postRank.HTTP_REQUEST();
